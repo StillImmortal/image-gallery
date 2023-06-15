@@ -1,3 +1,4 @@
+import { Image } from './api/images/route'
 import StaticImages from './components/StaticImages'
 
 const Page = async () => {
@@ -11,7 +12,7 @@ const Page = async () => {
           <p className='text-sm sm:text-md lg:text-lg xl:text-xl sm:max-w-[75%] text-gray-500'>Приоткройте занавес миров: встречайте визуальные шедевры, <span className='xs:whitespace-nowrap'>где сливаются творчество и мастерство объектива.</span></p>
         </div>
         <div className='mt-12 xl:mt-16'>
-          <StaticImages data={data}  />
+          <StaticImages data={data} />
         </div>
       </div>
     </main>
@@ -19,11 +20,11 @@ const Page = async () => {
 }
 
 async function getData() {
-  const res = await fetch("http://localhost:3000/api/images", { next: { revalidate: 60 } })
+  const res = await fetch("http://localhost:3000/api/images", { cache: "reload" })
   if (!res.ok) {
     throw new Error('Failed to fetch data')
   }
-  const imageData = await res.json()
+  const imageData: Image[] = await res.json()
   return imageData
 }
 

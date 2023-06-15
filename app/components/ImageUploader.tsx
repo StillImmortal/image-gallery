@@ -1,26 +1,30 @@
 "use client"
 
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef, FC, Dispatch, SetStateAction } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { useDropzone, FileWithPath } from 'react-dropzone'
 import { SlCloudUpload } from "react-icons/sl"
-
-import { encodeImageToBlurhash } from '@/lib/ImageService'
 import { Blurhash } from 'react-blurhash'
+
+import { uploadImage, saveImage, uploadToClodinary } from '@/services/ImageService'
+import { Image } from '../api/images/route'
+
+interface UploaderProps {
+  setUrls: Dispatch<SetStateAction<Image[]>>
+}
 
 interface UploaderFields {
   src: FileWithPath | null
+  hash: string
 }
 
-const ImageUploader = () => {
-  const dropzoneRef = useRef<HTMLDivElement>(null)
+const ImageUploader: FC<UploaderProps> = ({setUrls}) => {
   const imageRef = useRef<HTMLImageElement>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [submitting, setSubmitting] = useState<boolean>(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const { handleSubmit, setValue, watch } = useForm<UploaderFields>()
-  const watchSrc = watch("src", )
-  const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
+  const { handleSubmit, setValue, getValues, reset } = useForm<UploaderFields>()
+  const { getRootProps, getInputProps } = useDropzone({
     accept: {
       "image/*": ['.jpg', '.jpeg', '.png'],
     },
@@ -32,53 +36,43 @@ const ImageUploader = () => {
     },
   })
 
-  // const worker = new Worker("worker.js")
-
-  // worker.onmessage = (event) => {
-  //   const blurhash = event.data;
-  //   console.log(blurhash);
-  // }
-
-  const onSubmit: SubmitHandler<UploaderFields> = async (data) => {
-
-    // worker.postMessage(data.src)
-
-    // const res = await fetch("http://localhost:3000/api/images", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json"
-    //   },
-    //   body: JSON.stringify({src: data.src, url: selectedImage})
-    // })
-    // const resData  = await res.json()
-    // console.log(resData)
+  const encodeBlurhash = async (image: File) => {
+    const worker = new Worker(new URL("../../lib/blurhash.worker", import.meta.url))
+    worker.postMessage(image)
+  
+    worker.onmessage = async (event) => {
+      setValue("hash", event.data)
+      const {src, hash} = getValues()
+      if (src) {
+        const newImage = await saveImage(src.name, hash)
+        setSelectedImage(null)
+        reset()
+        setSubmitting(false)
+        setUrls((prev) => {
+          return [
+            ...prev,
+            newImage
+          ]
+        })
+      }
+    }
   }
 
-
-  // const handleDragOver = () => {
-  //   setDragging(true);
-  // };
-
-  // const handleDragLeave = () => {
-  //   setDragging(false);
-  // };
-
-  // const handleDrop = () => {
-  //   setDragging(false);
-  // };
-
-  // useEffect(() => {
-  //   if (dropzoneRef.current) {
-  //     dropzoneRef.current.addEventListener("dragenter", handleDragOver)
-  //     dropzoneRef.current.addEventListener("dragleave", handleDragLeave)
-  //   }
-  // }, [])
+  const onSubmit: SubmitHandler<UploaderFields> = async (data) => {
+    try {
+      setSubmitting(true)
+      if (data.src) {
+        await uploadImage(data.src)
+        await uploadToClodinary(data.src)
+        await encodeBlurhash(data.src)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
     <>
-      {/* <div ref={dropzoneRef} className='absolute inset-0 z-0'>
-
-      </div> */}
       <form className='relative flex flex-col w-full max-w-[600px] gap-4 items-start z-50' onSubmit={handleSubmit(onSubmit)}>
         <div 
           className='flex p-2 bg-transparent w-full max-w-[600px] min-h-[160px] outline-none border transition-colors hover:border-gray-300 border-gray-500 rounded cursor-pointer focus:ring-1 focus:ring-gray-300'
@@ -97,6 +91,11 @@ const ImageUploader = () => {
                 resolutionY={32}
                 punch={1}
                 />
+                {submitting && (
+                  <div className='absolute flex justify-center bg-black/75 items-center z-50 inset-0'>
+                    <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-20 w-20"></div>
+                  </div>
+                )}
                 <div className='absolute p-2 inset-0'>
                   <img 
                     className={`h-full w-full object-cover transition-opacity ${loading ? "opacity-0" : "opacity-100"}`}
@@ -115,9 +114,12 @@ const ImageUploader = () => {
             )}
           </div>
         </div>
-        <button className='flex justify-center items-center gap-2 h-12 hover:text-gray-300 text-gray-400 w-full border transition-colors hover:border-gray-300 border-gray-400 rounded'>
+        <button 
+          disabled={submitting ? true : false}
+          className={`flex justify-center items-center gap-2 h-12 w-full border transition-colors rounded ${submitting ? "text-gray-500 border-gray-500" : "hover:text-gray-300 text-gray-400 hover:border-gray-300 border-gray-400"}`}
+          >
           <p className='basis-[85%] text-md'>
-            Загрузить
+            {submitting ? "Загрузка..." : "Загрузить"}
           </p>
           <div className='basis-[15%] flex h-full justify-center items-center border-l w-f'>
             <SlCloudUpload className='text-2xl w-full' />

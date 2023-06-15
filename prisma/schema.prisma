@@ -1,14 +1,14 @@
-datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model Image {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
-  src      String    @unique
-  hash     String
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model image {
+  id   Int     @id @default(autoincrement())
+  src  String? @unique
+  hash String?
 }

@@ -42,3 +42,36 @@ html, body {
     @apply col-span-2 row-span-2;
   }
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loader {
+  border-top-color: rgb(45 212 191);
+  animation: spin 1s infinite linear;
+}
+
+.radial-gradient {
+  position: absolute;
+  z-index: 40;
+  inset: 0px;
+}
+
+@media screen and (min-width: 1024px) {
+  .radial-gradient {
+    position: absolute;
+    z-index: 40;
+    inset: 0px;
+    transition-duration: 300ms;
+    opacity: 0;
+    cursor: zoom-in;
+    background-image: radial-gradient(circle at center, transparent, rgba(0, 0, 0, .1), rgba(0, 0, 0, .4));
+  }
+
+  .radial-gradient:hover {
+    opacity: 1;
+  }
+}
