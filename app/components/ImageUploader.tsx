@@ -116,12 +116,12 @@ const ImageUploader: FC<UploaderProps> = ({setUrls}) => {
         </div>
         <button 
           disabled={submitting ? true : false}
-          className={`flex justify-center items-center gap-2 h-12 w-full border transition-colors rounded ${submitting ? "text-gray-500 border-gray-500" : "hover:text-gray-300 text-gray-400 hover:border-gray-300 border-gray-400"}`}
+          className={`flex justify-center items-center gap-2 h-12 w-full border transition-colors rounded ${submitting ? "text-gray-500 border-gray-500" : "hover:text-gray-300 text-gray-400 group hover:border-gray-300 border-gray-400"}`}
           >
-          <p className='basis-[85%] text-md'>
+          <p className='basis-[85%] text-md transition-colors '>
             {submitting ? "Загрузка..." : "Загрузить"}
           </p>
-          <div className='basis-[15%] flex h-full justify-center items-center border-l w-f'>
+          <div className='basis-[15%] flex h-full justify-center items-center transition-colors border-l group-hover:border-gray-300 border-gray-400 w-f'>
             <SlCloudUpload className='text-2xl w-full' />
           </div>
         </button>
